@@ -1,16 +1,26 @@
 ##### Git Aliases and Functions!
 
 # Configuration!
-SQUIZ_TOOLS_BIN="/Users/sthomas/Squiz/squiz-tools/bin"
-SQUIZ_PROJECT_DIR="/Users/sthomas/Squiz"
+GIT_TOOLS_DIR="~/Squiz/git_tools" # Updated path
+SQUIZ_PROJECT_DIR="~/Squiz"
+SQUIZ_DOCS_SOURCE="~/Squiz/squiz-documentation/source"
+GIT_ALIASES_FILE="$GIT_TOOLS_DIR/git_aliases.sh" # Updated path
+REPO_URLS_FILE="$GIT_TOOLS_DIR/repo_urls.txt" # Updated path
 YELLOW='\033[0;93m' # ANSI escape code for a brighter yellow color
 RESET='\033[0m'    # ANSI escape code to reset the color
 
 ##### Aliases!
 
-# gitemall: Reclone all repos from GitLab. Exectute in squiz-documentation/source directory.
+# gitemall: Reclone all repos from GitLab. Execute in squiz-documentation/source directory.
 gitemall() {
-  local target_dir="/Users/sthomas/Squiz/squiz-documentation/source"
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitemall [target_directory]"
+    echo "  Reclone all repos listed in $REPO_URLS_FILE from GitLab into the specified directory (or default)."
+    echo "  [target_directory] (optional): The directory to clone the repos into. Defaults to $SQUIZ_DOCS_SOURCE"
+    return 0
+  fi
+
+  local target_dir="$SQUIZ_DOCS_SOURCE"
 
   if [ -n "$1" ]; then
     target_dir="$1"
@@ -26,33 +36,74 @@ gitemall() {
   while read -r url; do
     echo "Cloning $url"
     git clone "$url" || { echo "Error cloning $url"; return 1;}
-  done < "$SQUIZ_PROJECT_DIR/git-tools/repo_urls.txt"
+  done < "$REPO_URLS_FILE"
 }
 alias gitemall="gitemall"
 
 # gitmerged: Invoke the merger script.
-alias gitmerged="$SQUIZ_TOOLS_BIN/gitmerged.sh"
+# Usage in gitmerged.sh
+alias gitmerged="$GIT_TOOLS_DIR/gitmerged.sh" # Updated path
 
 # gitup: Pushes commits to remote repository
-alias gitup='git push'
+gitup() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitup"
+    echo "  Pushes the current branch to the remote repository."
+    return 0
+  fi
+  git push "$@"
+}
+alias gitup="gitup"
 
 # gitupfirst: Pushes current branch and sets upstream
-alias gitupfirst='git push -u origin "$(git rev-parse --abbrev-ref HEAD)"'
+gitupfirst() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitupfirst"
+    echo "  Pushes the current branch to the remote repository and sets it as the upstream branch."
+    return 0
+  fi
+  git push -u origin "$(git rev-parse --abbrev-ref HEAD)" "$@"
+}
+alias gitupfirst="gitupfirst"
 
 # gitgud: Display information about custom Git commands
-alias gitgud='grep -E "^#" ~/Squiz/squiz-tools/git_aliases | grep -v "!"'
+gitgud() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitgud"
+    echo "  Displays information about custom Git commands defined in $GIT_ALIASES_FILE."
+    return 0
+  fi
+  grep -E "^#" "$GIT_ALIASES_FILE" | grep -v "!"
+}
+alias gitgud="gitgud"
 
 # gitout: Delete a remote branch, its tracking reference, and the local branch
-alias gitout="$SQUIZ_TOOLS_BIN/gitout.sh"
+# Usage handled in gitout.sh
+alias gitout="$GIT_TOOLS_DIR/gitout.sh" # Updated path
 
 # gitunstuck: Perform a merge from the remote version of the repo when you can't push or pull without errors
-alias gitunstuck='git fetch origin;git merge origin/"$(git rev-parse --abbrev-ref HEAD)"'
+gitunstuck(){
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitunstuck"
+    echo "  Performs a merge from the remote version of the current branch when you are having difficulty pushing or pulling."
+    return 0
+  fi
+  git fetch origin;git merge origin/"$(git rev-parse --abbrev-ref HEAD)" "$@"
+}
+alias gitunstuck="gitunstuck"
 
 ##### Functions!
 
 # gitin: Commit with current branch name and custom comment
 gitin() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitin <commit-message>"
+    echo "  Commits all staged changes with a message including the current branch name."
+    echo "  <commit-message>: The commit message."
+    return 0
+  fi
   if [ -z "$@" ]; then
+    echo "Error: Commit message is required."
     echo "Usage: gitin <commit-message>"
     return 1
   fi
@@ -63,6 +114,11 @@ gitin() {
 
 # gitdown: Change to Squiz project directory and update all Git repositories
 gitdown() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitdown"
+    echo "  Changes to the Squiz project directory and updates all Git repositories within it."
+    return 0
+  fi
   cd "$SQUIZ_PROJECT_DIR" || { echo "Directory $SQUIZ_PROJECT_DIR not found."; return 1; }
 
   find . -type d -name .git -print0 | while IFS= read -r -d '' gitdir; do
@@ -75,14 +131,17 @@ gitdown() {
       cd "$repo_dir" || { echo "Error changing directory to $repo_dir"; exit 1; }
 
       if git rev-parse --verify --quiet origin/master; then
-          git -c core.quotepath=false checkout master || echo "Ignoring error checking out master" && git -c core.quotepath=false checkout master 2>/dev/null
-          git -c core.quotepath=false pull || { echo "Error pulling master in $repo_dir"; exit 1; }
+        git -c core.quotepath=false checkout master || echo "Ignoring error checking out master" && git -c core.quotepath=false checkout master 2>/dev/null
+        git -c core.quotepath=false pull || { echo "Error pulling master in $repo_dir"; exit 1; }
+      elif git rev-parse --verify --quiet origin/main; then
+          git -c core.quotepath=false checkout main || echo "Ignoring error checking out main" && git -c core.quotepath=false checkout main 2>/dev/null
+          git -c core.quotepath=false pull || { echo "Error pulling main in $repo_dir"; exit 1; }
       else
         echo "No master branch exists for $repo_dir"
       fi
 
       if git rev-parse --verify --quiet origin/documentation-public; then
-        git -c core.quotepath=false checkout documentation-public || echo "Ignoring error checking out documentation-public" && git -c core.quotepath=false checkout documentation-public 2>/dev/null
+        git -c core.quotepath=false checkout documentation-public || echo "Ignoring error checking out master" && git -c core.quotepath=false checkout documentation-public 2>/dev/null
         git -c core.quotepath=false pull || { echo "Error pulling documentation-public in $repo_dir"; exit 1; }
       else
         echo "No documentation-public branch exists for $repo_dir"
@@ -94,13 +153,25 @@ gitdown() {
 
 # gitrekt: Restore all modified files (discarding uncommitted changes)
 gitrekt() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitrekt"
+    echo "  Restores all modified files to their last committed state, discarding any uncommitted changes."
+    return 0
+  fi
     git restore --staged . || echo "Nothing to restore in the index"
     git restore . || echo "Nothing to restore in the working directory"
 }
 
 # gitit: Checkout a specified branch
 gitit() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitit <branch-name>"
+    echo "  Checks out the specified branch."
+    echo "  <branch-name>: The name of the branch to checkout."
+    return 0
+  fi
   if [ -z "$1" ]; then
+    echo "Error: Branch name is required."
     echo "Usage: gitit <branch-name>"
     return 1
   fi
@@ -115,6 +186,11 @@ gitit() {
 
 # gitday: Outputs the today's commit messages in reverse chronological order.
 gitday() {
+  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: gitday"
+    echo "  Outputs today's commit messages in reverse chronological order."
+    return 0
+  fi
     local today=$(date +"%Y-%m-%d")
     git log --after="$today 00:00" --before="$today 23:59" --pretty=format:"%s" --reverse
 }
