@@ -5,7 +5,7 @@ GIT_TOOLS_DIR="~/Squiz/git_tools" # Updated path
 SQUIZ_PROJECT_DIR="~/Squiz"
 SQUIZ_DOCS_SOURCE="~/Squiz/squiz-documentation/source"
 GIT_ALIASES_FILE="$GIT_TOOLS_DIR/git_aliases.sh" # Updated path
-REPO_URLS_FILE="$GIT_TOOLS_DIR/repo_urls.txt" # Updated path
+REPO_URLS_FILE="$SQUIZ_PROJECT_DIR/squiz-tools/repo_urls.txt" # Updated path
 YELLOW='\033[0;93m' # ANSI escape code for a brighter yellow color
 RESET='\033[0m'    # ANSI escape code to reset the color
 
