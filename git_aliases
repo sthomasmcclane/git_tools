@@ -9,7 +9,26 @@ RESET='\033[0m'    # ANSI escape code to reset the color
 ##### Aliases!
 
 # gitemall: Reclone all repos from GitLab. Exectute in squiz-documentation/source directory.
-alias gitemall="cd /Users/sthomas/Squiz/squiz-documentation/source; while read -r url; do git clone "$url"; done < ../../squiz-tools/repo_urls.txt"
+gitemall() {
+  local target_dir="/Users/sthomas/Squiz/squiz-documentation/source"
+
+  if [ -n "$1" ]; then
+    target_dir="$1"
+  fi
+
+  if [ ! -d "$target_dir" ]; then
+    echo "Directory $target_dir does not exist"
+    return 1
+  fi
+
+  cd "$target_dir" || { echo "Error changing directory to $target_dir"; return 1; }
+
+  while read -r url; do
+    echo "Cloning $url"
+    git clone "$url" || { echo "Error cloning $url"; return 1;}
+  done < "$SQUIZ_PROJECT_DIR/git-tools/repo_urls.txt"
+}
+alias gitemall="gitemall"
 
 # gitmerged: Invoke the merger script.
 alias gitmerged="$SQUIZ_TOOLS_BIN/gitmerged.sh"
@@ -37,9 +56,9 @@ gitin() {
     echo "Usage: gitin <commit-message>"
     return 1
   fi
-  local branch
-  branch=$(git rev-parse --abbrev-ref HEAD)
-  git commit -am "$branch #comment $@"
+  local branch=$(git rev-parse --abbrev-ref HEAD)
+  echo "Committing to branch: $branch"
+  git commit -am "[$branch] $@"
 }
 
 # gitdown: Change to Squiz project directory and update all Git repositories
@@ -53,18 +72,30 @@ gitdown() {
     printf "${YELLOW}Updating repository in $repo_dir${RESET}\n"
 
     (
-      cd "$repo_dir" || exit
-      git -c core.quotepath=false checkout master 2>/dev/null
-      git -c core.quotepath=false pull 2>/dev/null
-      git -c core.quotepath=false checkout documentation-public 2>/dev/null
-      git -c core.quotepath=false pull 2>/dev/null
+      cd "$repo_dir" || { echo "Error changing directory to $repo_dir"; exit 1; }
+
+      if git rev-parse --verify --quiet origin/master; then
+          git -c core.quotepath=false checkout master || echo "Ignoring error checking out master" && git -c core.quotepath=false checkout master 2>/dev/null
+          git -c core.quotepath=false pull || { echo "Error pulling master in $repo_dir"; exit 1; }
+      else
+        echo "No master branch exists for $repo_dir"
+      fi
+
+      if git rev-parse --verify --quiet origin/documentation-public; then
+        git -c core.quotepath=false checkout documentation-public || echo "Ignoring error checking out documentation-public" && git -c core.quotepath=false checkout documentation-public 2>/dev/null
+        git -c core.quotepath=false pull || { echo "Error pulling documentation-public in $repo_dir"; exit 1; }
+      else
+        echo "No documentation-public branch exists for $repo_dir"
+      fi
+      git branch --merged | grep -v "\*" | xargs -r git branch -d 2>/dev/null
     )
   done
 }
 
 # gitrekt: Restore all modified files (discarding uncommitted changes)
 gitrekt() {
-  git status --porcelain | grep '^ M' | awk '{print $2}'| cut -f2- -d'/' | xargs -r git restore
+    git restore --staged . || echo "Nothing to restore in the index"
+    git restore . || echo "Nothing to restore in the working directory"
 }
 
 # gitit: Checkout a specified branch
@@ -73,7 +104,13 @@ gitit() {
     echo "Usage: gitit <branch-name>"
     return 1
   fi
-  git checkout "$@"
+  if git rev-parse --verify --quiet "$1"
+  then
+    git checkout "$@"
+  else
+    echo "Branch $1 does not exist"
+    return 1
+  fi
 }
 
 # gitday: Outputs the today's commit messages in reverse chronological order.
