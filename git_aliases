@@ -41,7 +41,6 @@ gitemall() {
 alias gitemall="gitemall"
 
 # gitmerged: Invoke the merger script.
-# Usage in gitmerged.sh
 alias gitmerged="$GIT_TOOLS_DIR/gitmerged.sh" # Updated path
 
 # gitup: Pushes commits to remote repository
@@ -78,7 +77,6 @@ gitgud() {
 alias gitgud="gitgud"
 
 # gitout: Delete a remote branch, its tracking reference, and the local branch
-# Usage handled in gitout.sh
 alias gitout="$GIT_TOOLS_DIR/gitout.sh" # Updated path
 
 # gitunstuck: Perform a merge from the remote version of the repo when you can't push or pull without errors
