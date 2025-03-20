@@ -49,8 +49,8 @@ is_working_directory_clean() {
 
 # Main script execution
 if [ $# -eq 0 ]; then
-  echo -e "${RED}Error: No branch name provided.${RESET}"
-  echo -e "${YELLOW}Usage: gitout <branch-name>${RESET}"
+  echo -e "Error: No branch name provided."
+  echo -e "Usage: gitout <branch-name>"
   exit 1
 fi
 
@@ -63,21 +63,21 @@ if is_protected_branch "$branch"; then
 fi
 
 # Refresh remote information
-echo -e "${YELLOW}Refreshing remote tracking information...${RESET}"
+echo -e "Refreshing remote tracking information..."
 git fetch origin --prune
 
 # Check for remote branch existence
 if git show-branch "remotes/origin/$branch" &> /dev/null; then
   echo -e "${YELLOW}Remote branch 'origin/$branch' found.${RESET}"
-  echo -e "${YELLOW}Standard practice is to delete feature branches on merge.${RESET}"
-  echo -e "${YELLOW}Check the merge status in GitLab.${RESET}"
-  echo -e "${YELLOW}Use the following command if you want to delete the remote:${RESET}"
-  echo -e "${YELLOW}git push origin --delete $branch${RESET}"
+  echo -e "Standard practice is to delete feature branches on merge."
+  echo -e "Check the merge status in GitLab."
+  echo -e "Use the following command if you want to delete the remote:"
+  echo -e "git push origin --delete $branch"
   exit 0
 fi
 
 echo -e "${YELLOW}You are about to clean up the local branch '$branch'.${RESET}"
-read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
+read -p "$(echo -e "Continue? (Press Enter to continue or 'q' and then Enter to abort).")" confirm_continue
 
 if [[ -n "$confirm_continue" ]]; then
   echo -e "${YELLOW}Aborting.${RESET}"
@@ -87,7 +87,7 @@ fi
 # Check for untracked files
 if check_untracked_files "$branch"; then
   echo -e "${YELLOW}Warning: There are untracked files on this branch.${RESET}"
-  read -p "$(echo -e "${YELLOW}Continue anyway? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
+  read -p "$(echo -e "Continue anyway? (Press Enter to continue or 'q' and then Enter to abort).")" confirm_continue
   if [[ -n "$confirm_continue" ]]; then
     echo -e "${YELLOW}Aborting.${RESET}"
     exit 0
@@ -96,18 +96,12 @@ fi
 
 while true; do
   echo -e "${YELLOW}Deleting local branch '$branch'...${RESET}"
-  read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
 
-  if [[ -n "$confirm_continue" ]]; then
-    echo -e "${YELLOW}Aborting.${RESET}"
-    exit 0
-  fi
   if git branch -d "$branch"; then
     echo -e "${GREEN}Local branch '$branch' deleted.${RESET}"
     break
   else
-    echo -e "${YELLOW}Local branch '$branch' has unmerged changes.${RESET}"
-    echo -e "${YELLOW}Here are the changes:${RESET}"
+    echo -e "${YELLOW}Local branch '$branch' has unmerged changes:${RESET}"
 
     target_branch=""
 
@@ -119,7 +113,7 @@ while true; do
       target_branch="master"
     else
       # If neither "main" nor "master" exists, exit with an error
-      echo -e "${RED}Error: Neither 'main' nor 'master' branch found. Please check your repository's default branch and update the script if needed.${RESET}"
+      echo -e "${RED}Error: No default branch found. Exiting.${RESET}"
       exit 1
     fi
 
@@ -138,12 +132,7 @@ while true; do
 done
 
 echo -e "${YELLOW}Pruning tracking references...${RESET}"
-read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
 
-if [[ -n "$confirm_continue" ]]; then
-  echo -e "${YELLOW}Aborting.${RESET}"
-  exit 0
-fi
 git fetch origin --prune && echo -e "${GREEN}Tracking references pruned.${RESET}" ||
 {
   echo -e "${RED}Failed to prune tracking references.${RESET}"
