@@ -69,16 +69,17 @@ git fetch origin --prune
 # Check for remote branch existence
 if git show-branch "remotes/origin/$branch" &> /dev/null; then
   echo -e "${YELLOW}Remote branch 'origin/$branch' found.${RESET}"
-  echo -e "${YELLOW}Since it is standard practice to delete feature branches on merge at your company, it is likely this remote branch has already been deleted or scheduled for deletion.${RESET}"
-  echo -e "${YELLOW}Please check the merge status and delete the branch in GitLab if needed, or if the merge failed, complete the merge.${RESET}"
+  echo -e "${YELLOW}Standard practice is to delete feature branches on merge.${RESET}"
+  echo -e "${YELLOW}Check the merge status in GitLab.${RESET}"
+  echo -e "${YELLOW}Use the following command if you want to delete the remote:${RESET}"
   echo -e "${YELLOW}git push origin --delete $branch${RESET}"
   exit 0
 fi
 
 echo -e "${YELLOW}You are about to clean up the local branch '$branch'.${RESET}"
-read -r -s -n 1 -p "$(echo -e "${YELLOW}Continue? (c to continue, q to quit): ${RESET}")" key
+read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
 
-if [[ "$key" == "q" || "$key" == "Q" ]]; then
+if [[ -n "$confirm_continue" ]]; then
   echo -e "${YELLOW}Aborting.${RESET}"
   exit 0
 fi
@@ -86,18 +87,18 @@ fi
 # Check for untracked files
 if check_untracked_files "$branch"; then
   echo -e "${YELLOW}Warning: There are untracked files on this branch.${RESET}"
-  read -r -s -n 1 -p "$(echo -e "${YELLOW}Continue anyway? (c to continue, q to quit): ${RESET}")" key
-  if [[ "$key" == "q" || "$key" == "Q" ]]; then
+  read -p "$(echo -e "${YELLOW}Continue anyway? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
+  if [[ -n "$confirm_continue" ]]; then
     echo -e "${YELLOW}Aborting.${RESET}"
     exit 0
   fi
-}
+fi
 
 while true; do
   echo -e "${YELLOW}Deleting local branch '$branch'...${RESET}"
-  read -r -s -n 1 -p "$(echo -e "${YELLOW}Continue? (c to continue, q to quit): ${RESET}")" key
+  read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
 
-  if [[ "$key" == "q" || "$key" == "Q" ]]; then
+  if [[ -n "$confirm_continue" ]]; then
     echo -e "${YELLOW}Aborting.${RESET}"
     exit 0
   fi
@@ -108,7 +109,7 @@ while true; do
     echo -e "${YELLOW}Local branch '$branch' has unmerged changes.${RESET}"
     echo -e "${YELLOW}Here are the changes:${RESET}"
 
-    local target_branch=""
+    target_branch=""
 
     # Check if "main" exists
     if git show-ref --verify --quiet "refs/heads/main"; then
@@ -122,10 +123,11 @@ while true; do
       exit 1
     fi
 
-    git log --oneline --graph "$branch" ^"$target_branch"
-    git status -b -s
-    read -r -s -n 1 -p "$(echo -e "${YELLOW}Are you sure you want to forcefully delete the local branch '$branch'? (c to continue, q to quit): ${RESET}")" key
-    if [[ "$key" == "q" || "$key" == "Q" ]]; then
+    # List the recent commits on feature branch that are NOT on the destination branch
+    git log --oneline --graph -5 "$branch" ^"$target_branch"
+
+    read -p "$(echo -e "${YELLOW}Are you sure you want to forcefully delete the local branch '$branch'? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_force
+    if [[ -n "$confirm_force" ]]; then
       echo -e "${YELLOW}Aborting.${RESET}"
       exit 0
     fi
@@ -136,9 +138,9 @@ while true; do
 done
 
 echo -e "${YELLOW}Pruning tracking references...${RESET}"
-read -r -s -n 1 -p "$(echo -e "${YELLOW}Continue? (c to continue, q to quit): ${RESET}")" key
+read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
 
-if [[ "$key" == "q" || "$key" == "Q" ]]; then
+if [[ -n "$confirm_continue" ]]; then
   echo -e "${YELLOW}Aborting.${RESET}"
   exit 0
 fi
