@@ -23,16 +23,18 @@ is_protected_branch() {
 
 # Function to check for untracked files
 check_untracked_files() {
-  local branch="$1"
-  local untracked_files=$(git status --porcelain | grep "^??" | wc -l)
-  if [[ "$untracked_files" -gt 0 ]]; then
-    echo -e "${YELLOW}Untracked files found on branch '$branch':${RESET}"
-    git status --porcelain |
-    grep "^??"
-    return 1
-  else
-    return 0
-  fi
+  { # Added opening curly brace
+    local branch="$1"
+    local untracked_files=$(git status --porcelain | grep "^??" | wc -l)
+    if [[ "$untracked_files" -gt 0 ]]; then
+      echo -e "${YELLOW}Untracked files found on branch '$branch':${RESET}"
+      git status --porcelain |
+      grep "^??"
+      return 1
+    else
+      return 0
+    fi
+  } # Closing curly brace (already present)
 }
 
 # Function to check for a clean working directory
@@ -69,14 +71,14 @@ if git show-branch "remotes/origin/$branch" &> /dev/null; then
   echo -e "${YELLOW}Remote branch 'origin/$branch' found.${RESET}"
   echo -e "${YELLOW}Since it is standard practice to delete feature branches on merge at your company, it is likely this remote branch has already been deleted or scheduled for deletion.${RESET}"
   echo -e "${YELLOW}Please check the merge status and delete the branch in GitLab if needed, or if the merge failed, complete the merge.${RESET}"
-  echo -e "${YELLOW}If you would still like to attempt to delete it, you can run this command:${RESET}"
   echo -e "${YELLOW}git push origin --delete $branch${RESET}"
   exit 0
 fi
 
 echo -e "${YELLOW}You are about to clean up the local branch '$branch'.${RESET}"
-read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
-if [[ -n "$confirm_continue" ]]; then
+read -r -s -n 1 -p "$(echo -e "${YELLOW}Continue? (c to continue, q to quit): ${RESET}")" key
+
+if [[ "$key" == "q" || "$key" == "Q" ]]; then
   echo -e "${YELLOW}Aborting.${RESET}"
   exit 0
 fi
@@ -84,17 +86,18 @@ fi
 # Check for untracked files
 if check_untracked_files "$branch"; then
   echo -e "${YELLOW}Warning: There are untracked files on this branch.${RESET}"
-  read -p "$(echo -e "${YELLOW}Continue anyway? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
-  if [[ -n "$confirm_continue" ]]; then
+  read -r -s -n 1 -p "$(echo -e "${YELLOW}Continue anyway? (c to continue, q to quit): ${RESET}")" key
+  if [[ "$key" == "q" || "$key" == "Q" ]]; then
     echo -e "${YELLOW}Aborting.${RESET}"
     exit 0
   fi
-fi
+}
 
 while true; do
   echo -e "${YELLOW}Deleting local branch '$branch'...${RESET}"
-  read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
-  if [[ -n "$confirm_continue" ]]; then
+  read -r -s -n 1 -p "$(echo -e "${YELLOW}Continue? (c to continue, q to quit): ${RESET}")" key
+
+  if [[ "$key" == "q" || "$key" == "Q" ]]; then
     echo -e "${YELLOW}Aborting.${RESET}"
     exit 0
   fi
@@ -104,10 +107,25 @@ while true; do
   else
     echo -e "${YELLOW}Local branch '$branch' has unmerged changes.${RESET}"
     echo -e "${YELLOW}Here are the changes:${RESET}"
-    git log --oneline --graph "$branch" ^"main" # or "master"
+
+    local target_branch=""
+
+    # Check if "main" exists
+    if git show-ref --verify --quiet "refs/heads/main"; then
+      target_branch="main"
+    # If "main" doesn't exist, check for "master"
+    elif git show-ref --verify --quiet "refs/heads/master"; then
+      target_branch="master"
+    else
+      # If neither "main" nor "master" exists, exit with an error
+      echo -e "${RED}Error: Neither 'main' nor 'master' branch found. Please check your repository's default branch and update the script if needed.${RESET}"
+      exit 1
+    fi
+
+    git log --oneline --graph "$branch" ^"$target_branch"
     git status -b -s
-    read -p "$(echo -e "${YELLOW}Are you sure you want to forcefully delete the local branch '$branch'? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_force
-    if [[ -n "$confirm_force" ]]; then
+    read -r -s -n 1 -p "$(echo -e "${YELLOW}Are you sure you want to forcefully delete the local branch '$branch'? (c to continue, q to quit): ${RESET}")" key
+    if [[ "$key" == "q" || "$key" == "Q" ]]; then
       echo -e "${YELLOW}Aborting.${RESET}"
       exit 0
     fi
@@ -118,8 +136,9 @@ while true; do
 done
 
 echo -e "${YELLOW}Pruning tracking references...${RESET}"
-read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
-if [[ -n "$confirm_continue" ]]; then
+read -r -s -n 1 -p "$(echo -e "${YELLOW}Continue? (c to continue, q to quit): ${RESET}")" key
+
+if [[ "$key" == "q" || "$key" == "Q" ]]; then
   echo -e "${YELLOW}Aborting.${RESET}"
   exit 0
 fi
