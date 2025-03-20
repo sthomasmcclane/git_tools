@@ -75,7 +75,7 @@ if git show-branch "remotes/origin/$branch" &> /dev/null; then
 fi
 
 echo -e "${YELLOW}You are about to clean up the local branch '$branch'.${RESET}"
-read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue, any other key to abort): ${RESET}")" confirm_continue
+read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
 if [[ -n "$confirm_continue" ]]; then
   echo -e "${YELLOW}Aborting.${RESET}"
   exit 0
@@ -84,16 +84,16 @@ fi
 # Check for untracked files
 if check_untracked_files "$branch"; then
   echo -e "${YELLOW}Warning: There are untracked files on this branch.${RESET}"
-  read -p "$(echo -e "${YELLOW}Continue anyway? (Press Enter to continue, any other key to abort): ${RESET}")" confirm_continue
+  read -p "$(echo -e "${YELLOW}Continue anyway? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
   if [[ -n "$confirm_continue" ]]; then
     echo -e "${YELLOW}Aborting.${RESET}"
     exit 0
   fi
-}
+fi
 
 while true; do
   echo -e "${YELLOW}Deleting local branch '$branch'...${RESET}"
-  read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue, any other key to abort): ${RESET}")" confirm_continue
+  read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
   if [[ -n "$confirm_continue" ]]; then
     echo -e "${YELLOW}Aborting.${RESET}"
     exit 0
@@ -106,7 +106,7 @@ while true; do
     echo -e "${YELLOW}Here are the changes:${RESET}"
     git log --oneline --graph "$branch" ^"main" # or "master"
     git status -b -s
-    read -p "$(echo -e "${YELLOW}Are you sure you want to forcefully delete the local branch '$branch'? (Press Enter to continue, any other key to abort): ${RESET}")" confirm_force
+    read -p "$(echo -e "${YELLOW}Are you sure you want to forcefully delete the local branch '$branch'? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_force
     if [[ -n "$confirm_force" ]]; then
       echo -e "${YELLOW}Aborting.${RESET}"
       exit 0
@@ -118,7 +118,7 @@ while true; do
 done
 
 echo -e "${YELLOW}Pruning tracking references...${RESET}"
-read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue, any other key to abort): ${RESET}")" confirm_continue
+read -p "$(echo -e "${YELLOW}Continue? (Press Enter to continue or 'q' and then Enter to abort): ${RESET}")" confirm_continue
 if [[ -n "$confirm_continue" ]]; then
   echo -e "${YELLOW}Aborting.${RESET}"
   exit 0
