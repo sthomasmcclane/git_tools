@@ -23,7 +23,6 @@ is_protected_branch() {
 
 # Function to check for untracked files
 check_untracked_files() {
-  { # Added opening curly brace
     local branch="$1"
     local untracked_files=$(git status --porcelain | grep "^??" | wc -l)
     if [[ "$untracked_files" -gt 0 ]]; then
@@ -34,8 +33,7 @@ check_untracked_files() {
     else
       return 0
     fi
-  } # Closing curly brace (already present)
-}
+  }
 
 # Function to check for a clean working directory
 is_working_directory_clean() {
