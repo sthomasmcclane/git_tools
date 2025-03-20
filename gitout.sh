@@ -60,12 +60,16 @@ if is_protected_branch "$branch"; then
   exit 1
 fi
 
-# Check for remote branch existence FIRST
+# Refresh remote information
+echo -e "${YELLOW}Refreshing remote tracking information...${RESET}"
+git fetch origin --prune
+
+# Check for remote branch existence
 if git show-branch "remotes/origin/$branch" &> /dev/null; then
   echo -e "${YELLOW}Remote branch 'origin/$branch' found.${RESET}"
-  echo -e "${YELLOW}Standard practice is to delete feature branches on merge.${RESET}"
-  echo -e "${YELLOW}Please check the merge status and delete the branch in GitLab.${RESET}"
-  echo -e "${YELLOW}To delete the remote branch, run this command:${RESET}"
+  echo -e "${YELLOW}Since it is standard practice to delete feature branches on merge at your company, it is likely this remote branch has already been deleted or scheduled for deletion.${RESET}"
+  echo -e "${YELLOW}Please check the merge status and delete the branch in GitLab if needed, or if the merge failed, complete the merge.${RESET}"
+  echo -e "${YELLOW}If you would still like to attempt to delete it, you can run this command:${RESET}"
   echo -e "${YELLOW}git push origin --delete $branch${RESET}"
   exit 0
 fi
