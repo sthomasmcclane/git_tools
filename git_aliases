@@ -149,8 +149,8 @@ gitdown() {
   done
 }
 
-# gitrekt: Restore all modified files (discarding uncommitted changes)
-gitrekt() {
+# gitback: Restore all modified files (discarding uncommitted changes)
+gitback() {
   if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "Usage: gitrekt"
     echo "  Restores all modified files to their last committed state, discarding any uncommitted changes."
@@ -182,8 +182,8 @@ gitit() {
   fi
 }
 
-# gitday: Outputs the today's commit messages in reverse chronological order.
-gitday() {
+# gitinfo: Outputs the today's commit messages in reverse chronological order.
+gitinfo() {
   if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "Usage: gitday"
     echo "  Outputs today's commit messages in reverse chronological order."
@@ -191,4 +191,35 @@ gitday() {
   fi
     local today=$(date +"%Y-%m-%d")
     git log --after="$today 00:00" --before="$today 23:59" --pretty=format:"%s" --reverse
+}
+
+# githead: Reset HEAD to the chosen commit.
+githead() {
+  local commit_hashes commit_messages selected_hash selected_message IFS
+
+  # Get commit hashes and messages, preserving spaces.
+  IFS=$'\n' read -d '' -r -a commit_messages < <(git log --oneline --pretty=%B)
+  IFS=$'\n' read -d '' -r -a commit_hashes < <(git log --oneline --pretty=%H)
+
+  # Create a numbered list of commits.
+  echo "Select a commit to reset to (all commits after will be discarded):"
+  select selected_message in "${commit_messages[@]}"; do
+    if [[ -n "$selected_message" ]]; then
+      selected_hash=$(echo "${commit_hashes[$REPLY-1]}")
+      break
+    else
+      echo "Invalid selection."
+    fi
+  done
+
+  # Confirm and perform the reset.
+  if [[ -n "$selected_hash" ]]; then
+    read -p "Are you sure you want to reset to commit '$selected_message' ($selected_hash)? (y/n): " confirm
+    if [[ "$confirm" == "y" ]]; then
+      git reset --hard "$selected_hash"
+      echo "Reset successful to commit '$selected_message' ($selected_hash)."
+    else
+      echo "Reset canceled."
+    fi
+  fi
 }
