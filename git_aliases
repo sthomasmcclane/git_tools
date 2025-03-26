@@ -107,7 +107,7 @@ gitin() {
   fi
   local branch=$(git rev-parse --abbrev-ref HEAD)
   echo "Committing to branch: $branch"
-  git commit -am "[$branch] $@"
+  git commit -am "$branch #comment $@"
 }
 
 # gitdown: Change to Squiz project directory and update all Git repositories
@@ -195,11 +195,11 @@ gitinfo() {
 
 # githead: Reset HEAD to the chosen commit.
 githead() {
-  local commit_hashes commit_messages selected_hash selected_message IFS
+local commit_hashes commit_messages selected_hash selected_message IFS limit=5
 
-  # Get commit hashes and messages, preserving spaces.
-  IFS=$'\n' read -d '' -r -a commit_messages < <(git log --oneline --pretty=%B)
-  IFS=$'\n' read -d '' -r -a commit_hashes < <(git log --oneline --pretty=%H)
+  # Get commit hashes and messages, preserving spaces, limited to $limit commits.
+  IFS=$'\n' read -d '' -r -a commit_messages < <(git log --oneline --pretty=%B -n "$limit")
+  IFS=$'\n' read -d '' -r -a commit_hashes < <(git log --oneline --pretty=%H -n "$limit")
 
   # Create a numbered list of commits.
   echo "Select a commit to reset to (all commits after will be discarded):"
