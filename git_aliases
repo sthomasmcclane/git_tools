@@ -9,7 +9,18 @@ REPO_URLS_FILE="$SQUIZ_PROJECT_DIR/squiz-tools/repo_urls.txt" # Updated path
 YELLOW='\033[0;93m' # ANSI escape code for a brighter yellow color
 RESET='\033[0m'    # ANSI escape code to reset the color
 
-##### Aliases!
+## Aliases
+
+# gitmerged: Invoke the merger script.
+alias gitmerged="$GIT_TOOLS_DIR/gitmerged.sh"
+
+# gitup: Pushes commits to remote repository and prompts for Grammarly pass
+alias gitup="$GIT_TOOLS_DIR/gitup.sh"
+
+# gitout: Delete a remote branch, its tracking reference, and the local branch
+alias gitout="$GIT_TOOLS_DIR/gitout.sh"
+
+## Functions
 
 # gitemall: Reclone all repos from GitLab. Execute in squiz-documentation/source directory.
 gitemall() {
@@ -40,19 +51,6 @@ gitemall() {
 }
 alias gitemall="gitemall"
 
-# gitmerged: Invoke the merger script.
-alias gitmerged="$GIT_TOOLS_DIR/gitmerged.sh" # Updated path
-
-# gitup: Pushes commits to remote repository
-gitup() {
-  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "Usage: gitup"
-    echo "  Pushes the current branch to the remote repository."
-    return 0
-  fi
-  git push "$@"
-}
-alias gitup="gitup"
 
 # gitupfirst: Pushes current branch and sets upstream
 gitupfirst() {
@@ -76,8 +74,7 @@ gitgud() {
 }
 alias gitgud="gitgud"
 
-# gitout: Delete a remote branch, its tracking reference, and the local branch
-alias gitout="$GIT_TOOLS_DIR/gitout.sh" # Updated path
+
 
 # gitunstuck: Perform a merge from the remote version of the repo when you can't push or pull without errors
 gitunstuck(){
@@ -89,8 +86,6 @@ gitunstuck(){
   git fetch origin;git merge origin/"$(git rev-parse --abbrev-ref HEAD)" "$@"
 }
 alias gitunstuck="gitunstuck"
-
-##### Functions!
 
 # gitin: Commit with current branch name and custom comment
 gitin() {
