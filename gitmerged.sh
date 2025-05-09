@@ -37,7 +37,27 @@ printf "${YELLOW}Continue? (y|n)${RESET}\n"
 read ANS
 
 case $ANS in
-    n) echo "Fix conflicts, save, commit, and push to continue."
+    n) echo ""
+        echo "Merge encountered conflicts!"
+        echo "Please follow these steps to resolve the conflicts:"
+        echo ""
+        echo "1. Identify the conflicting files:"
+        echo "   - Run 'git status' to see a list of files with conflicts."
+        echo ""
+        echo "2. Resolve the conflicts:"
+        echo "   - Open each conflicting file in a text editor."
+        echo "   - Look for conflict markers (<<<<<<<, =======, >>>>>>>) and edit the file to resolve the conflicts."
+        echo "   - Save the file after resolving the conflicts."
+        echo ""
+        echo "3. If there are more conflicts, repeat steps 1 and 2."
+        echo ""
+        echo "4. Once the all conflicts are resolved, stage the resolved files:"
+        echo "   - For each file you've resolved, run 'git add <file>'."
+        echo "   - You can also use 'git add .' to stage all modified files."
+        echo ""
+        echo "5. Finally, push your changes:"
+        echo "   - Run 'git push' to update the remote branch."
+        echo ""
         exit ;;
     y) echo "Committing and pushing"
         if [ $SOURCE = 'master' ]; then
