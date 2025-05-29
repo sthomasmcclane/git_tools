@@ -177,7 +177,7 @@ gitit() {
   # Check if the input is a number (assuming it's a C4E ticket number)
   if [[ "$branch_name" =~ ^[0-9]+$ ]]; then
     branch_name="C4E-$branch_name"
-  elif [[ "$branch_name" == "main" ]]; then
+  elif [[ "$branch_name" == "main" || "$branch_name" == "master" ]]; then
     # Check for 'main' or 'master'
     if git rev-parse --verify --quiet "main"; then
       branch_name="main"
