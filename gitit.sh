@@ -52,6 +52,18 @@ if git rev-parse --verify --quiet "$branch_to_checkout"; then
     exit 1
   fi
 else
-  echo "Error: Branch '$original_input' (resolved to '$branch_to_checkout') does not exist." >&2
-  exit 1
+  # If branch doesn't exist and input was a number, create the branch
+  if [[ "$original_input" =~ ^[0-9]+$ ]]; then
+    echo "Branch '$branch_to_checkout' does not exist. Creating it..."
+    if git checkout -b "$branch_to_checkout"; then
+      echo "Created and switched to branch '$branch_to_checkout'"
+      exit 0
+    else
+      echo "Error: Failed to create branch '$branch_to_checkout'." >&2
+      exit 1
+    fi
+  else
+    echo "Error: Branch '$original_input' (resolved to '$branch_to_checkout') does not exist." >&2
+    exit 1
+  fi
 fi
