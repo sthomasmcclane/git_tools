@@ -93,15 +93,20 @@ alias gitunstuck="gitunstuck"
 # gitin: Commit with current branch name and custom comment
 gitin() {
   if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "Usage: gitin <commit-message>"
+    echo "Usage: gitin [commit-message]"
     echo "  Commits all staged changes with a message including the current branch name."
-    echo "  <commit-message>: The commit message."
+    echo "  [commit-message] (optional): The commit message. If not provided, performs 'git add .'"
     return 0
   fi
   if [ -z "$@" ]; then
-    echo "Error: Commit message is required."
-    echo "Usage: gitin <commit-message>"
-    return 1
+    echo "No commit message provided. Performing 'git add .'"
+    if git add .; then
+      echo "All changes have been staged."
+      exit 0
+    else
+      echo "Error: Git add failed." >&2
+      exit 1
+    fi
   fi
   local branch=$(git rev-parse --abbrev-ref HEAD)
   echo "Committing to branch: $branch"
