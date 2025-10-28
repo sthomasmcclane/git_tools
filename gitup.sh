@@ -33,6 +33,13 @@ fi
 git push "$@"
 
 if [ $? -eq 0 ]; then
+    # Check if the commit message includes 'Grammarly'
+    commit_message=$(git log -1 --pretty=%B)
+    if [[ "$commit_message" =~ [Gg]rammarly ]]; then
+        printf "${GREEN}Skipping Grammarly reminders (commit message includes 'Grammarly')${RESET}\n"
+        exit 0
+    fi
+    
     while IFS= read -r file <&3; do  # Read from file descriptor 3
         # Extract filename without path for cleaner output
         filename=$(basename "$file")
