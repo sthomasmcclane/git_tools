@@ -9,9 +9,26 @@ RESET='\033[0m'
 # Get the repository root directory
 repo_root=$(git rev-parse --show-toplevel)
 
+# Number of commits to check in file history (configurable)
+GRAMMARLY_CHECK_DEPTH=${GRAMMARLY_CHECK_DEPTH:-6}
+
 # Function to get modified files
 get_modified_files() {
     git diff HEAD~1 --name-only
+}
+
+# Function to check if file has been recently checked with Grammarly
+# Returns 0 (true) if Grammarly found in recent commits, 1 (false) otherwise
+has_recent_grammarly_check() {
+    local file="$1"
+    # Get commit messages for the last N commits that touched this file
+    local commit_messages=$(git log -n "$GRAMMARLY_CHECK_DEPTH" --pretty=%B -- "$file" 2>/dev/null)
+    
+    if [[ "$commit_messages" =~ [Gg]rammarly ]]; then
+        return 0  # Found Grammarly
+    else
+        return 1  # Not found
+    fi
 }
 
 # Check if pbcopy is available
@@ -33,7 +50,7 @@ fi
 git push "$@"
 
 if [ $? -eq 0 ]; then
-    # Check if the commit message includes 'Grammarly'
+    # Quick check: if current commit message includes 'Grammarly', skip all reminders
     commit_message=$(git log -1 --pretty=%B)
     if [[ "$commit_message" =~ [Gg]rammarly ]]; then
         printf "${GREEN}Skipping Grammarly reminders (commit message includes 'Grammarly')${RESET}\n"
@@ -43,6 +60,12 @@ if [ $? -eq 0 ]; then
     while IFS= read -r file <&3; do  # Read from file descriptor 3
         # Extract filename without path for cleaner output
         filename=$(basename "$file")
+        
+        # Check if this file has been recently checked with Grammarly
+        if has_recent_grammarly_check "$file"; then
+            printf "${GREEN}Skipping ${filename} (recently checked with Grammarly in last ${GRAMMARLY_CHECK_DEPTH} commits)${RESET}\n"
+            continue
+        fi
 
         printf "${YELLOW}Did you want to put the contents of ${filename} through Grammarly? (y/n): ${RESET}"
         read -r response
