@@ -31,6 +31,23 @@ has_recent_grammarly_check() {
     fi
 }
 
+# Function to check if file is an image file
+# Returns 0 (true) if file is an image, 1 (false) otherwise
+is_image_file() {
+    local file="$1"
+    local extension="${file##*.}"
+    extension=$(echo "$extension" | tr '[:upper:]' '[:lower:]')
+    
+    case "$extension" in
+        png|jpg|jpeg|svg|gif)
+            return 0  # Is an image
+            ;;
+        *)
+            return 1  # Not an image
+            ;;
+    esac
+}
+
 # Check if pbcopy is available
 if ! command -v pbcopy &> /dev/null; then
     printf "${RED}Error: pbcopy is not available. Please install it to use the Grammarly check feature.${RESET}\n"
@@ -60,6 +77,11 @@ if [ $? -eq 0 ]; then
     while IFS= read -r file <&3; do  # Read from file descriptor 3
         # Extract filename without path for cleaner output
         filename=$(basename "$file")
+        
+        # Skip image files (no need for Grammarly check)
+        if is_image_file "$file"; then
+            continue
+        fi
         
         # Check if this file has been recently checked with Grammarly
         if has_recent_grammarly_check "$file"; then
